@@ -1,16 +1,14 @@
 <html>
-  <blink>Hello World!</blink>
-  <div id="date">
-    {{.Date}}
-  </div>
-  <div id="host">
-    {{.Hostname}}
-  </div>
-  <div id="scalegroup">
-    {{.ScaleGroup}}
-  </div>
-  <div id="req">
-    Request was:
-    {{.Request}}
+  <head>
+    <title>Hello Traefik World!</title>
+  </head>
+  <div id="model">
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Date</td><td>{{.Date}}</td></tr>
+      <tr><td>Hostname</td><td>{{.Hostname}}</td></tr>
+      <tr><td>Scale group</td><td>{{.ScaleGroup}}</td></tr>
+      <tr><td>Request</td><td>{{.Request}}</td></tr>
+    </table>
   </div>
 </html>
