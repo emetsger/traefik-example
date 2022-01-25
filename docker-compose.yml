@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  traefik:
+    image: traefik:v2.6.0
+    env_file: .env
+    ports:
+      - "${TRAEFIK_CONSOLE_PORT}:8080"
+      - "${TRAEFIK_PROXY_PORT}:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    command: --api.insecure=true --providers.docker --log.level=error --providers.docker.exposedByDefault=false
+  server:
+    build:
+      context: .
+    image: local/traefik-example
+    env_file: .env
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.server-traefik-example.rule=Host(`server-01.traefik.me`)
+      - traefik.http.services.server-traefik-example.loadbalancer.server.port=80
+
