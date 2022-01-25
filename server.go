@@ -1,14 +1,16 @@
 package main
 
 import (
-	"flag"
+	"errors"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -20,15 +22,33 @@ const (
 
 func main() {
 
-	debugEnabled := flag.Bool("debug", false, "enable debugging")
+	model := struct {
+		Hostname string
+		Request  string
+	}{
+		Hostname: mustHostname(),
+	}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
 		filePath := path.Join(contentRoot, r.URL.Path)
 		log.Printf("Serving '%s'", filePath)
-		if *debugEnabled {
-			dump, _ := httputil.DumpRequest(r, false)
-			log.Printf("Request dump\n%s", dump)
+
+		if strings.HasSuffix(filePath, ".tmpl") {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("I refuse to serve raw template files.\n"))
+			return
 		}
+
+		if tmplPath, exists := isTemplateRequest(filePath); exists {
+			dump, _ := httputil.DumpRequest(r, false)
+			model.Request = string(dump)
+			if filePath, err = processTemplate(tmplPath, model); err != nil {
+				writeErr(w, err)
+			}
+		}
+
 		f, err := os.Open(filePath)
 		var lastMod time.Time
 		var name string
@@ -74,4 +94,58 @@ func mustGetIntOrDefault(env string, defaultV int) int {
 	}
 
 	return defaultV
+}
+
+func mustHostname() string {
+	host, err := os.Hostname()
+	if err != nil {
+		log.Fatalf("error getting hostname: %s", err)
+	}
+	return host
+}
+
+func isTemplateRequest(path string) (string, bool) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return "", false
+	}
+
+	if errors.Is(err, os.ErrNotExist) {
+		tmplPath := strings.ReplaceAll(path, ".html", ".tmpl")
+		_, err := os.Stat(tmplPath)
+		return tmplPath, err == nil
+	}
+
+	return "", false
+}
+
+func processTemplate(tmplPath string, model interface{}) (string, error) {
+
+	var (
+		tmpl    *template.Template
+		outFile *os.File
+		err     error
+	)
+
+	defer func() {
+		if outFile != nil {
+			outFile.Close()
+		}
+	}()
+
+	if tmpl, err = template.ParseFiles(tmplPath); err != nil {
+		return "", err
+	}
+
+	outPath := strings.ReplaceAll(tmplPath, ".tmpl", ".html")
+	outFile, err = os.OpenFile(outPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
+	if err != nil {
+		return "", err
+	}
+
+	err = tmpl.Execute(outFile, model)
+	if err != nil {
+		return "", err
+	}
+	return outPath, nil
 }

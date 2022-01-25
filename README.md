@@ -10,4 +10,6 @@ The Traefik console is available by default at [http://localhost:8080], and prox
 
 This demo is configured to use hostnames from the [`traefik.me`](http://traefik.me) domain, which returns `127.0.0.1` for all lookups.
 
-Visit [http://server-01.traefik.me/hello-world.html], which is a proxied service that is automatically configured using metadata in the [docker-compose.yml](./docker-compose.yml) file. 
+Visit [http://service.traefik.me/index.html], which is a proxied service that is automatically configured using metadata in the [docker-compose.yml](./docker-compose.yml) file.
+
+For fun, launch multiple instances of the server by invoking `docker-compose up --scale server=5`, then re-execute your request to [http://service.traefik.me/index.html] multiple times.  You should notice that traefik automatically discovered the new instances, and loadbalanced across them automatically.

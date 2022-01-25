@@ -16,6 +16,6 @@ services:
     env_file: .env
     labels:
       - traefik.enable=true
-      - traefik.http.routers.server-traefik-example.rule=Host(`server-01.traefik.me`)
+      - traefik.http.routers.server-traefik-example.rule=Host(`service.traefik.me`)
       - traefik.http.services.server-traefik-example.loadbalancer.server.port=80
 
