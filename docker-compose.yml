@@ -14,8 +14,19 @@ services:
       context: .
     image: local/traefik-example
     env_file: .env
+    command: ./server -group=one
     labels:
       - traefik.enable=true
       - traefik.http.routers.server-traefik-example.rule=Host(`service.traefik.me`)
       - traefik.http.services.server-traefik-example.loadbalancer.server.port=80
+  server2:
+    build:
+      context: .
+    image: local/traefik-example
+    env_file: .env
+    command: ./server -group=two -webRoot=/group2
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.server2-traefik-example.rule=Host(`service.traefik.me`) && PathPrefix(`/group2/`)
+      - traefik.http.services.server2-traefik-example.loadbalancer.server.port=80
 

@@ -14,5 +14,3 @@ COPY --from=build /build/server ./server
 COPY ./www /www
 
 RUN chmod 555 ./server
-
-CMD ./server
